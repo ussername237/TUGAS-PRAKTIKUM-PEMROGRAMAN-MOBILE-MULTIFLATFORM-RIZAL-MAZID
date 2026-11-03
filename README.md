@@ -13,6 +13,8 @@ Aplikasi diary React Native dan Expo untuk mencatat kegiatan atau cerita sehari-
 - Detail catatan dengan dynamic route dan route parameter
 - Like tersinkron antara Home, Favorit, dan Detail
 - Daftar catatan Favorit
+- Filter catatan berdasarkan suasana hati
+- Pencarian dengan debounce dan tombol reset filter
 - Tab Pengaturan dan halaman Tentang Aplikasi
 - Tombol kembali ke Home dari Detail
 - Shared state dengan React Context
@@ -45,3 +47,13 @@ Aplikasi diary React Native dan Expo untuk mencatat kegiatan atau cerita sehari-
 - `src/app/about.js`: Tentang Aplikasi
 
 Catatan dan status suka disimpan di Context selama aplikasi berjalan. Data belum disimpan secara persisten setelah aplikasi ditutup.
+
+## Hooks pada Praktikum Pertemuan 6
+
+- `useState` menyimpan entri dan favorit di Context, serta input form dan filter mood pada layar.
+- `useContext` mengakses entri, aksi tambah, serta status suka bersama dari `EntriesProvider`.
+- `useEffect` mengatur debounce pencarian 350 ms dan membersihkan timer saat kata kunci berubah atau komponen dilepas.
+- `useMemo` menghitung hasil pencarian/filter dan daftar favorit dari data yang menjadi dependensinya.
+- `useCallback` menstabilkan aksi navigasi, reset, dan suka yang diberikan ke komponen anak.
+- `useRef` menyimpan referensi input pencarian agar fokus bisa dikembalikan tanpa render ulang.
+- `useDiarySearch` dan `useLikedEntries` memisahkan logika pencarian dan pemilihan favorit agar dapat digunakan ulang.

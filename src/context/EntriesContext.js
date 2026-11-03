@@ -3,8 +3,10 @@ import React, {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from 'react';
+import { MOODS } from '../constants/moods';
 
 const INITIAL_ENTRIES = [
   {
@@ -15,8 +17,7 @@ const INITIAL_ENTRIES = [
       'Bangun lebih awal, menikmati kopi hangat sambil membaca buku favorit.',
     body:
       'Hari ini dimulai dengan tenang. Saya bangun pukul 05.30 dan menikmati udara pagi. Secangkir kopi hangat menemani saya membaca beberapa halaman buku favorit.',
-    moodUri: 'https://picsum.photos/seed/happy/200',
-    heroUri: 'https://picsum.photos/seed/happyhero/800/450',
+    mood: MOODS[0].value,
   },
   {
     id: '2',
@@ -26,8 +27,7 @@ const INITIAL_ENTRIES = [
       'Menyelesaikan tugas praktikum dengan membagi pekerjaan menjadi target kecil.',
     body:
       'Tugas praktikum hari ini selesai lebih cepat. Saya membagi pekerjaan menjadi beberapa target kecil dan menyelesaikannya satu per satu tanpa menunda.',
-    moodUri: 'https://picsum.photos/seed/focus/200',
-    heroUri: 'https://picsum.photos/seed/focushero/800/450',
+    mood: MOODS[2].value,
   },
   {
     id: '3',
@@ -37,8 +37,7 @@ const INITIAL_ENTRIES = [
       'Berjalan santai di taman kampus sambil menikmati suasana senja.',
     body:
       'Sore ini saya berjalan santai di taman kampus. Langit berubah menjadi jingga. Momen sederhana seperti ini membuat pikiran kembali segar.',
-    moodUri: 'https://picsum.photos/seed/calm/200',
-    heroUri: 'https://picsum.photos/seed/calmhero/800/450',
+    mood: MOODS[1].value,
   },
   {
     id: '4',
@@ -48,8 +47,7 @@ const INITIAL_ENTRIES = [
       'Memahami flexDirection, gap, dan flex untuk membuat layout React Native.',
     body:
       'Malam ini saya belajar Flexbox. Saya mencoba flexDirection untuk mengatur posisi komponen dan flex untuk mengatur ruang yang tersedia.',
-    moodUri: 'https://picsum.photos/seed/study/200',
-    heroUri: 'https://picsum.photos/seed/studyhero/800/450',
+    mood: MOODS[2].value,
   },
   {
     id: '5',
@@ -59,8 +57,7 @@ const INITIAL_ENTRIES = [
       'Mengevaluasi target mingguan dan merencanakan langkah berikutnya.',
     body:
       'Saya mengevaluasi target mingguan dan mempelajari pentingnya membagi target besar menjadi langkah kecil.',
-    moodUri: 'https://picsum.photos/seed/reflect/200',
-    heroUri: 'https://picsum.photos/seed/reflecthero/800/450',
+    mood: MOODS[1].value,
   },
 ];
 
@@ -69,11 +66,12 @@ const EntriesContext = createContext(null);
 export function EntriesProvider({ children }) {
   const [entries, setEntries] = useState(INITIAL_ENTRIES);
   const [likedIds, setLikedIds] = useState(() => new Set());
+  const nextEntryId = useRef(0);
 
   const addEntry = useCallback((entry) => {
     const newEntry = {
       ...entry,
-      id: String(Date.now()),
+      id: `${Date.now()}-${nextEntryId.current++}`,
     };
 
     setEntries((previous) => [newEntry, ...previous]);
@@ -86,13 +84,15 @@ export function EntriesProvider({ children }) {
   );
 
   const toggleLike = useCallback((id) => {
+    const entryId = String(id);
+
     setLikedIds((previous) => {
       const next = new Set(previous);
 
-      if (next.has(id)) {
-        next.delete(id);
+      if (next.has(entryId)) {
+        next.delete(entryId);
       } else {
-        next.add(id);
+        next.add(entryId);
       }
 
       return next;

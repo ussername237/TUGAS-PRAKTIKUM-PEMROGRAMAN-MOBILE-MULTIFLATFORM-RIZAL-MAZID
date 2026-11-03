@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -40,12 +39,12 @@ export default function DiaryDetailRoute() {
       <Stack.Screen options={{ title: entry.title }} />
       <SafeAreaView style={styles.safeArea} edges={['bottom', 'left', 'right']}>
         <ScrollView contentContainerStyle={styles.content}>
-          <Image
-            source={{ uri: entry.heroUri || entry.moodUri }}
-            style={styles.hero}
-            resizeMode="cover"
-            accessibilityLabel={`Gambar utama untuk ${entry.title}`}
-          />
+          <View
+            style={styles.mood}
+            accessibilityLabel={`Suasana hati: ${entry.mood || 'belum ditentukan'}`}
+          >
+            <Text style={styles.moodEmoji}>{entry.mood || '📔'}</Text>
+          </View>
           <Text style={styles.title} accessibilityRole="header">
             {entry.title}
           </Text>
@@ -92,11 +91,16 @@ const styles = StyleSheet.create({
     padding: SPACE.l,
     gap: SPACE.m,
   },
-  hero: {
+  mood: {
     width: '100%',
-    aspectRatio: 16 / 9,
+    minHeight: 140,
     borderRadius: RADIUS.m,
     backgroundColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moodEmoji: {
+    fontSize: 64,
   },
   title: {
     fontSize: TYPO.h1,

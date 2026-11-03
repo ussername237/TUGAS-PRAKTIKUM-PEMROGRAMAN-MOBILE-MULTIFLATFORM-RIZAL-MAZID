@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { MOODS } from '../constants/moods';
 
 const getToday = () => {
   const today = new Date();
@@ -21,12 +22,13 @@ const getToday = () => {
 export default function EntryForm({ onSubmit }) {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(getToday);
-  const [preview, setPreview] = useState('');
+  const [body, setBody] = useState('');
+  const [mood, setMood] = useState(MOODS[0].value);
 
   const canSubmit =
     title.trim().length > 0 &&
     date.trim().length > 0 &&
-    preview.trim().length > 0;
+    body.trim().length > 0;
 
   const submit = () => {
     if (!canSubmit) {
@@ -48,17 +50,17 @@ export default function EntryForm({ onSubmit }) {
     const newEntry = {
       title: title.trim(),
       date: date.trim(),
-      preview: preview.trim(),
-      body: preview.trim(),
-      moodUri: 'https://picsum.photos/seed/default/200',
-      heroUri: 'https://picsum.photos/seed/defaulthero/800/450',
+      preview: body.trim().slice(0, 100),
+      body: body.trim(),
+      mood,
     };
 
     onSubmit(newEntry);
 
     setTitle('');
     setDate(getToday());
-    setPreview('');
+    setBody('');
+    setMood(MOODS[0].value);
   };
 
   return (
@@ -84,14 +86,33 @@ export default function EntryForm({ onSubmit }) {
       />
 
       <TextInput
-        value={preview}
-        onChangeText={setPreview}
+        value={body}
+        onChangeText={setBody}
         placeholder="Ceritakan kegiatanmu..."
         style={[styles.input, styles.multiline]}
         multiline
         textAlignVertical="top"
         accessibilityLabel="Isi catatan diary"
       />
+
+      <Text style={styles.moodLabel}>Bagaimana suasana hatimu?</Text>
+      <View style={styles.moodOptions}>
+        {MOODS.map((option) => (
+          <Pressable
+            key={option.value}
+            onPress={() => setMood(option.value)}
+            style={[
+              styles.moodOption,
+              mood === option.value && styles.selectedMood,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={option.label}
+            accessibilityState={{ selected: mood === option.value }}
+          >
+            <Text style={styles.moodEmoji}>{option.value}</Text>
+          </Pressable>
+        ))}
+      </View>
 
       <Pressable
         onPress={submit}
@@ -138,6 +159,37 @@ const styles = StyleSheet.create({
 
   multiline: {
     minHeight: 80,
+  },
+
+  moodLabel: {
+    color: '#1F2937',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  moodOptions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+
+  moodOption: {
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+  },
+
+  selectedMood: {
+    borderColor: '#2563EB',
+    backgroundColor: '#EFF6FF',
+  },
+
+  moodEmoji: {
+    fontSize: 24,
   },
 
   button: {

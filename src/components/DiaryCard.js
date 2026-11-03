@@ -3,7 +3,6 @@ import React from 'react';
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   Pressable,
 } from 'react-native';
@@ -12,15 +11,12 @@ export default function DiaryCard({
   title,
   date,
   preview,
-  moodUri,
-  moodImage,
+  mood,
   variant = 'list',
   liked = false,
   onPress,
   onToggleLike,
 }) {
-  const imageSource = moodUri || moodImage;
-
   return (
     <View
       style={[
@@ -35,21 +31,9 @@ export default function DiaryCard({
         accessibilityLabel={`Buka entri ${title}`}
         accessibilityHint="Membuka detail catatan."
       >
-        {imageSource ? (
-          <Image
-            source={
-              typeof imageSource === 'string'
-                ? { uri: imageSource }
-                : imageSource
-            }
-            style={styles.image}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.imagePlaceholder}>
-            <Text style={styles.placeholderText}>📔</Text>
-          </View>
-        )}
+        <View style={styles.mood}>
+          <Text style={styles.moodText}>{mood || '📔'}</Text>
+        </View>
 
         <View style={styles.content}>
           <Text style={styles.title} numberOfLines={2}>
@@ -107,14 +91,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
-  image: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
-    backgroundColor: '#F3F4F6',
-  },
-
-  imagePlaceholder: {
+  mood: {
     width: 64,
     height: 64,
     borderRadius: 12,
@@ -123,8 +100,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  placeholderText: {
-    fontSize: 24,
+  moodText: {
+    fontSize: 32,
   },
 
   content: {
