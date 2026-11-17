@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ALL_MOODS } from '../constants/moods';
+import { ALL_MOODS, normalizeMood } from '../constants/moods';
 
 export function useDiarySearch(entries, selectedMood = ALL_MOODS) {
   const [query, setQuery] = useState('');
@@ -17,8 +17,8 @@ export function useDiarySearch(entries, selectedMood = ALL_MOODS) {
     const keyword = debouncedQuery.trim().toLowerCase();
 
     return entries.filter((entry) => {
-      const matchesMood =
-        selectedMood === ALL_MOODS || entry.mood === selectedMood;
+      const matchesMood = selectedMood === ALL_MOODS
+        || normalizeMood(entry.mood) === selectedMood;
       const searchableText = [
         entry.title,
         entry.date,

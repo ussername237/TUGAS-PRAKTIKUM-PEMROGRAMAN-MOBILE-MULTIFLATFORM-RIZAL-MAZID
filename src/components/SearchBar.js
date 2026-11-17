@@ -4,11 +4,12 @@ import {
   Text,
   View,
   TextInput,
-  Pressable,
   StyleSheet,
 } from 'react-native';
 
-import { COLORS, SPACE, RADIUS, MIN_TOUCH } from '../styles/tokens';
+import { useTheme } from '../context/ThemeContext';
+import { SPACE, RADIUS, MIN_TOUCH } from '../styles/tokens';
+import AnimatedPressable from './AnimatedPressable';
 
 const SearchBar = React.forwardRef(function SearchBar({
   value = '',
@@ -16,6 +17,9 @@ const SearchBar = React.forwardRef(function SearchBar({
   onChange,
   onClear,
 }, ref) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -23,7 +27,7 @@ const SearchBar = React.forwardRef(function SearchBar({
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor={COLORS.muted}
+        placeholderTextColor={colors.muted}
         style={styles.input}
         autoCapitalize="none"
         autoCorrect={false}
@@ -31,14 +35,14 @@ const SearchBar = React.forwardRef(function SearchBar({
         returnKeyType="search"
       />
       {value.length > 0 && onClear && (
-        <Pressable
+        <AnimatedPressable
           onPress={onClear}
           style={styles.clearButton}
           accessibilityRole="button"
           accessibilityLabel="Hapus pencarian"
         >
           <Text style={styles.clearText}>×</Text>
-        </Pressable>
+        </AnimatedPressable>
       )}
     </View>
   );
@@ -46,7 +50,7 @@ const SearchBar = React.forwardRef(function SearchBar({
 
 export default SearchBar;
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -56,13 +60,13 @@ const styles = StyleSheet.create({
 
   input: {
     minHeight: MIN_TOUCH,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     borderRadius: RADIUS.m,
     paddingHorizontal: SPACE.m,
     fontSize: 16,
-    color: COLORS.text,
+    color: colors.text,
     flex: 1,
   },
 
@@ -76,7 +80,7 @@ const styles = StyleSheet.create({
   },
 
   clearText: {
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: 24,
   },
 });

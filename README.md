@@ -1,59 +1,77 @@
-# Diary App (Pertemuan 5 - Navigasi)
+# Diary App (Pertemuan ke 8)
 
-**Nama:** Rizal Mazid
-**NIM:** 2430511031
-**Mata Kuliah:** Pemrograman Mobile Multiplatform
-**Universitas:** Universitas Muhammadiyah Sukabumi
+**Nama:** Rizal Mazid  
+**NIM:** 2430511031  
+**Mata Kuliah:** Pemrograman Mobile Multiplatform  
+**Universitas:** Universitas Muhammadiyah Sukabumi  
+**Studi Kasus:** Diary App dengan Global State Management
 
-Aplikasi diary React Native dan Expo untuk mencatat kegiatan atau cerita sehari-hari. Navigasi menggunakan Expo Router.
+## Tentang Aplikasi
+
+Diary App adalah aplikasi mobile untuk **menulis**, **mencari**, dan **mengelola catatan harian**. 
+
+- Aplikasi dibuat dengan Expo, React Native, Expo Router, dan Redux
+Toolkit.
 
 ## Fitur
-- Home dengan daftar dan pencarian catatan
-- Menambahkan catatan melalui tab Tambah
-- Detail catatan dengan dynamic route dan route parameter
-- Like tersinkron antara Home, Favorit, dan Detail
-- Daftar catatan Favorit
-- Filter catatan berdasarkan suasana hati
-- Pencarian dengan debounce dan tombol reset filter
-- Tab Pengaturan dan halaman Tentang Aplikasi
-- Tombol kembali ke Home dari Detail
-- Shared state dengan React Context
 
-## Teknologi
-- React Native
-- Expo SDK 58
-- Expo Router (Stack dan Bottom Tabs)
-- React Context
-- JavaScript
+- Menambah, mengedit, dan menghapus catatan diary.
+- Mencari catatan berdasarkan judul, tanggal, atau isi.
+- Memfilter catatan berdasarkan suasana hati.
+- Menandai catatan sebagai favorit dan menghapus semua status favorit.
+- Melihat jumlah diary dan favorit di halaman Beranda.
+- Mengubah tema terang atau gelap melalui halaman Pengaturan.
+- Memilih emblem suasana hati dengan animasi lembut.
+- Mendapatkan animasi saat menekan tombol.
+- Menggunakan tata letak satu kolom di ponsel dan dua kolom di layar lebar.
+- Melihat halaman detail untuk setiap catatan.
 
-## Cara Menjalankan
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Jalankan aplikasi:
-   ```bash
-   npx expo start
-   ```
-3. Buka dengan Expo Go atau Android Emulator. Tekan `w` untuk menjalankan versi web jika dependensi web tersedia.
+## Teknologi dan Pengelolaan Data
 
-## Struktur Navigasi
-- `src/app/_layout.js`: Root Stack dan provider shared state
-- `src/app/(tabs)/index.js`: Home
-- `src/app/(tabs)/create.js`: Tambah catatan
-- `src/app/(tabs)/favorites.js`: Catatan Favorit
-- `src/app/(tabs)/settings.js`: Pengaturan
-- `src/app/detail/[id].js`: Detail dengan parameter `id`
-- `src/app/about.js`: Tentang Aplikasi
+- **Expo** dan **React Native** untuk aplikasi lintas platform.
+- **Expo Router** untuk navigasi tab dan halaman detail.
+- **Redux Toolkit** dan **React-Redux** untuk mengelola catatan dan favorit
+    sebagai global state.
+- **Local state** untuk nilai formulir dan filter yang sedang digunakan.
 
-Catatan dan status suka disimpan di Context selama aplikasi berjalan. Data belum disimpan secara persisten setelah aplikasi ditutup.
+Data catatan saat ini hanya disimpan di memori selama aplikasi berjalan. Belum
+ada database atau penyimpanan persisten, sehingga perubahan akan hilang saat
+aplikasi dimulai ulang. Pilihan tema juga kembali ke mode terang setelah
+aplikasi dimulai ulang.
 
-## Hooks pada Praktikum Pertemuan 6
+## Menjalankan Aplikasi
 
-- `useState` menyimpan entri dan favorit di Context, serta input form dan filter mood pada layar.
-- `useContext` mengakses entri, aksi tambah, serta status suka bersama dari `EntriesProvider`.
-- `useEffect` mengatur debounce pencarian 350 ms dan membersihkan timer saat kata kunci berubah atau komponen dilepas.
-- `useMemo` menghitung hasil pencarian/filter dan daftar favorit dari data yang menjadi dependensinya.
-- `useCallback` menstabilkan aksi navigasi, reset, dan suka yang diberikan ke komponen anak.
-- `useRef` menyimpan referensi input pencarian agar fokus bisa dikembalikan tanpa render ulang.
-- `useDiarySearch` dan `useLikedEntries` memisahkan logika pencarian dan pemilihan favorit agar dapat digunakan ulang.
+Pastikan Node.js dan npm sudah terpasang, lalu jalankan dari folder proyek:
+
+```bash
+npm install
+npx expo start
+```
+
+Pindai QR code dengan Expo Go untuk membuka aplikasi di perangkat. Jika
+menggunakan emulator Android, tekan `a`. Simulator iOS memerlukan macOS dan
+Xcode; jika tersedia, tekan `i`.
+
+**Untuk menjalankan versi web:**
+
+```bash
+npx expo start --web
+```
+
+## Perintah Lain
+
+```bash
+npm run android
+npm run ios
+npm run web
+npm run lint
+```
+
+## Struktur Proyek
+
+- `src/app/` - halaman dan layout navigasi Expo Router.
+- `src/components/` - komponen antarmuka yang digunakan ulang.
+- `src/constants/` - pilihan suasana hati.
+- `src/features/diary/` - Redux slice untuk data diary.
+- `src/store/` - konfigurasi Redux store dan hooks.
+- `src/styles/` - warna, ukuran, dan keluarga font.

@@ -4,11 +4,14 @@ import {
   View,
   Text,
   TextInput,
-  Pressable,
   StyleSheet,
   Alert,
 } from 'react-native';
 import { MOODS } from '../constants/moods';
+import { useTheme } from '../context/ThemeContext';
+import { SPACE, RADIUS, FONT_FAMILIES } from '../styles/tokens';
+import AnimatedPressable from './AnimatedPressable';
+import MoodEmblem from './MoodEmblem';
 
 const getToday = () => {
   const today = new Date();
@@ -19,14 +22,20 @@ const getToday = () => {
   return `${year}-${month}-${day}`;
 };
 
-export default function EntryForm({ onSubmit }) {
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState(getToday);
-  const [body, setBody] = useState('');
-  const [mood, setMood] = useState(MOODS[0].value);
+export default function EntryForm({
+  onSubmit,
+  initialEntry,
+  submitLabel = 'Simpan Diary',
+}) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors, Boolean(initialEntry));
+  const [title, setTitle] = useState(initialEntry?.title ?? '');
+  const [date, setDate] = useState(initialEntry?.date ?? getToday);
+  const [body, setBody] = useState(initialEntry?.body ?? '');
+  const [mood, setMood] = useState(initialEntry?.mood ?? MOODS[0].value);
 
   const canSubmit =
-    title.trim().length > 0 &&
+    title.trim().length >= 3 &&
     date.trim().length > 0 &&
     body.trim().length > 0;
 
@@ -34,7 +43,7 @@ export default function EntryForm({ onSubmit }) {
     if (!canSubmit) {
       Alert.alert(
         'Data belum lengkap',
-        'Judul, tanggal, dan isi catatan harus diisi.'
+        'Judul minimal 3 karakter, tanggal, dan isi catatan harus diisi.'
       );
       return;
     }
@@ -47,7 +56,7 @@ export default function EntryForm({ onSubmit }) {
       return;
     }
 
-    const newEntry = {
+    const updatedEntry = {
       title: title.trim(),
       date: date.trim(),
       preview: body.trim().slice(0, 100),
@@ -55,32 +64,44 @@ export default function EntryForm({ onSubmit }) {
       mood,
     };
 
-    onSubmit(newEntry);
+    onSubmit(updatedEntry);
 
-    setTitle('');
-    setDate(getToday());
-    setBody('');
-    setMood(MOODS[0].value);
+    if (!initialEntry) {
+      setTitle('');
+      setDate(getToday());
+      setBody('');
+      setMood(MOODS[0].value);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>
-        Tambah Diary Baru
+        {initialEntry ? 'Edit Diary' : 'Tambah Diary Baru'}
       </Text>
 
       <TextInput
         value={title}
         onChangeText={setTitle}
         placeholder="Judul diary"
+        placeholderTextColor={colors.muted}
+        selectionColor={colors.primary}
         style={styles.input}
         accessibilityLabel="Judul diary"
+        maxLength={100}
       />
+      {title.trim().length > 0 && title.trim().length < 3 && (
+        <Text style={styles.validationText}>
+          Judul harus terdiri dari minimal 3 karakter.
+        </Text>
+      )}
 
       <TextInput
         value={date}
         onChangeText={setDate}
         placeholder="YYYY-MM-DD"
+        placeholderTextColor={colors.muted}
+        selectionColor={colors.primary}
         style={styles.input}
         accessibilityLabel="Tanggal diary"
       />
@@ -89,6 +110,8 @@ export default function EntryForm({ onSubmit }) {
         value={body}
         onChangeText={setBody}
         placeholder="Ceritakan kegiatanmu..."
+        placeholderTextColor={colors.muted}
+        selectionColor={colors.primary}
         style={[styles.input, styles.multiline]}
         multiline
         textAlignVertical="top"
@@ -98,7 +121,7 @@ export default function EntryForm({ onSubmit }) {
       <Text style={styles.moodLabel}>Bagaimana suasana hatimu?</Text>
       <View style={styles.moodOptions}>
         {MOODS.map((option) => (
-          <Pressable
+          <AnimatedPressable
             key={option.value}
             onPress={() => setMood(option.value)}
             style={[
@@ -109,12 +132,16 @@ export default function EntryForm({ onSubmit }) {
             accessibilityLabel={option.label}
             accessibilityState={{ selected: mood === option.value }}
           >
-            <Text style={styles.moodEmoji}>{option.value}</Text>
-          </Pressable>
+            <MoodEmblem
+              mood={option.value}
+              size={32}
+              animated={mood === option.value}
+            />
+          </AnimatedPressable>
         ))}
       </View>
 
-      <Pressable
+      <AnimatedPressable
         onPress={submit}
         disabled={!canSubmit}
         style={[
@@ -124,37 +151,43 @@ export default function EntryForm({ onSubmit }) {
         accessibilityRole="button"
       >
         <Text style={styles.buttonText}>
-          Simpan Diary
+          {submitLabel}
         </Text>
-      </Pressable>
+      </AnimatedPressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors, isEditing) => StyleSheet.create({
   container: {
     marginVertical: 8,
-    padding: 16,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 14,
-    gap: 10,
+    padding: SPACE.l,
+    backgroundColor: colors.secondary,
+    borderRadius: RADIUS.m,
+    gap: SPACE.s + 2,
   },
 
   heading: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 4,
-    color: '#1F2937',
+    color: colors.text,
+    fontFamily: isEditing ? FONT_FAMILIES.editorial : FONT_FAMILIES.modernMedium,
+  },
+  validationText: {
+    color: colors.danger,
+    fontSize: 12,
   },
 
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
+    borderColor: colors.border,
+    borderRadius: RADIUS.m - 2,
     padding: 12,
     fontSize: 14,
-    color: '#1F2937',
+    color: colors.text,
+    fontFamily: FONT_FAMILIES.modern,
   },
 
   multiline: {
@@ -162,9 +195,10 @@ const styles = StyleSheet.create({
   },
 
   moodLabel: {
-    color: '#1F2937',
+    color: colors.text,
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: FONT_FAMILIES.modern,
   },
 
   moodOptions: {
@@ -178,22 +212,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
   },
 
   selectedMood: {
-    borderColor: '#2563EB',
-    backgroundColor: '#EFF6FF',
-  },
-
-  moodEmoji: {
-    fontSize: 24,
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
   },
 
   button: {
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.primary,
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -204,7 +234,8 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: '#FFFFFF',
+    color: colors.onPrimary,
     fontWeight: 'bold',
+    fontFamily: FONT_FAMILIES.modernMedium,
   },
 });

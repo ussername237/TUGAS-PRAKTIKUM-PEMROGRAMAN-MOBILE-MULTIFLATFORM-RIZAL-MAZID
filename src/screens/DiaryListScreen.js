@@ -1,38 +1,45 @@
 import React, { useCallback, useRef, useState } from 'react';
 
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
   FlatList,
-  Pressable,
   ScrollView,
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
+import { useTheme } from '../context/ThemeContext';
 import DiaryCard from '../components/DiaryCard';
 import SearchBar from '../components/SearchBar';
-import { useEntries } from '../context/EntriesContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { clearAllFavorites, toggleLike } from '../features/diary/diarySlice';
 import { ALL_MOODS, MOODS } from '../constants/moods';
 import { useDiarySearch } from '../hooks/useDiarySearch';
 import { useLikedEntries } from '../hooks/useLikedEntries';
+import AnimatedPressable from '../components/AnimatedPressable';
 import {
-  COLORS,
+  RADIUS,
   SPACE,
   TYPO,
   BREAKPOINTS,
+  FONT_FAMILIES,
 } from '../styles/tokens';
 
 export default function DiaryListScreen({ favoritesOnly = false }) {
   const { width } = useWindowDimensions();
+  const { colors } = useTheme();
+  const styles = createStyles(colors, favoritesOnly);
   const twoCols = width >= BREAKPOINTS.tablet;
   const router = useRouter();
-  const { entries, likedIds, toggleLike } = useEntries();
+  const dispatch = useAppDispatch();
+  const entries = useAppSelector((state) => state.diary.entries);
   const [selectedMood, setSelectedMood] = useState(ALL_MOODS);
   const searchRef = useRef(null);
-  const likedEntries = useLikedEntries(entries, likedIds);
+  const likedEntries = useLikedEntries(entries);
   const sourceEntries = favoritesOnly ? likedEntries : entries;
   const {
     query,
@@ -58,6 +65,21 @@ export default function DiaryListScreen({ favoritesOnly = false }) {
     setSelectedMood(ALL_MOODS);
   }, [setQuery]);
 
+  const confirmClearFavorites = useCallback(() => {
+    Alert.alert(
+      'Hapus semua favorit',
+      'Semua catatan akan dihapus dari daftar favorit.',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: () => dispatch(clearAllFavorites()),
+        },
+      ]
+    );
+  }, [dispatch]);
+
   const renderItem = useCallback(({ item }) => (
     <View style={[styles.itemWrap, twoCols && styles.itemWrap2]}>
       <DiaryCard
@@ -66,12 +88,13 @@ export default function DiaryListScreen({ favoritesOnly = false }) {
         preview={item.preview}
         mood={item.mood}
         variant={twoCols ? 'grid' : 'list'}
-        liked={likedIds.has(item.id)}
+        fontFamily={favoritesOnly ? FONT_FAMILIES.editorial : FONT_FAMILIES.modern}
+        liked={item.liked}
         onPress={() => openDetail(item.id)}
-        onToggleLike={() => toggleLike(item.id)}
+        onToggleLike={() => dispatch(toggleLike(item.id))}
       />
     </View>
-  ), [likedIds, openDetail, toggleLike, twoCols]);
+  ), [dispatch, favoritesOnly, openDetail, styles, twoCols]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -88,6 +111,34 @@ export default function DiaryListScreen({ favoritesOnly = false }) {
           : 'Catat cerita dan pengalaman harianmu.'}
       </Text>
 
+      {favoritesOnly ? (
+        <View style={styles.favoriteActions}>
+          <Text style={styles.resultCount}>
+            {likedEntries.length} catatan favorit
+          </Text>
+          {likedEntries.length > 0 && (
+            <AnimatedPressable
+              onPress={confirmClearFavorites}
+              style={styles.clearFavoritesButton}
+              accessibilityRole="button"
+            >
+              <Text style={styles.clearFavoritesText}>Hapus semua</Text>
+            </AnimatedPressable>
+          )}
+        </View>
+      ) : (
+        <View style={styles.stats}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{entries.length}</Text>
+            <Text style={styles.statLabel}>Total Diary</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{likedEntries.length}</Text>
+            <Text style={styles.statLabel}>Total Favorit</Text>
+          </View>
+        </View>
+      )}
+
       <SearchBar
         ref={searchRef}
         value={query}
@@ -101,7 +152,7 @@ export default function DiaryListScreen({ favoritesOnly = false }) {
         contentContainerStyle={styles.filters}
         accessibilityLabel="Filter suasana hati"
       >
-        <Pressable
+        <AnimatedPressable
           onPress={() => setSelectedMood(ALL_MOODS)}
           style={[
             styles.filterChip,
@@ -116,9 +167,9 @@ export default function DiaryListScreen({ favoritesOnly = false }) {
           ]}>
             Semua mood
           </Text>
-        </Pressable>
+        </AnimatedPressable>
         {MOODS.map((mood) => (
-          <Pressable
+          <AnimatedPressable
             key={mood.value}
             onPress={() => setSelectedMood(mood.value)}
             style={[
@@ -133,17 +184,17 @@ export default function DiaryListScreen({ favoritesOnly = false }) {
               styles.filterText,
               selectedMood === mood.value && styles.selectedFilterText,
             ]}>
-              {mood.value} {mood.label}
+              {mood.label}
             </Text>
-          </Pressable>
+          </AnimatedPressable>
         ))}
-        <Pressable
+        <AnimatedPressable
           onPress={resetFilters}
           style={styles.resetButton}
           accessibilityRole="button"
         >
           <Text style={styles.resetText}>Reset filter</Text>
-        </Pressable>
+        </AnimatedPressable>
       </ScrollView>
 
       <Text style={styles.resultCount}>
@@ -161,37 +212,94 @@ export default function DiaryListScreen({ favoritesOnly = false }) {
         }
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-          <Text style={styles.empty}>
-            {favoritesOnly && likedIds.size === 0
-              ? 'Belum ada catatan favorit. Sukai catatan dari Home atau Detail.'
-              : 'Catatan tidak ditemukan.'}
-          </Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.empty}>
+              {favoritesOnly && likedEntries.length === 0
+                ? 'Belum ada catatan favorit. Tambahkan catatan ke favorit dari Home atau Detail.'
+                : !favoritesOnly && entries.length === 0
+                  ? 'Belum ada diary. Tambahkan cerita pertamamu.'
+                  : 'Catatan tidak ditemukan.'}
+            </Text>
+            {!favoritesOnly && entries.length === 0 && (
+              <AnimatedPressable
+                onPress={() => router.push('/create')}
+                style={styles.emptyAction}
+                accessibilityRole="button"
+              >
+                <Text style={styles.emptyActionText}>Tambah Diary</Text>
+              </AnimatedPressable>
+            )}
+          </View>
         }
       />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors, favoritesOnly) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
   },
 
   header: {
     fontSize: TYPO.h1,
     fontWeight: '700',
+    fontFamily: favoritesOnly ? FONT_FAMILIES.editorial : FONT_FAMILIES.modern,
     paddingHorizontal: SPACE.l,
     paddingTop: SPACE.l,
-    color: COLORS.text,
+    color: colors.text,
   },
 
   subtitle: {
     fontSize: TYPO.body,
-    color: COLORS.muted,
+    fontFamily: favoritesOnly ? FONT_FAMILIES.editorial : FONT_FAMILIES.modern,
+    color: colors.muted,
     paddingHorizontal: SPACE.l,
     marginTop: SPACE.xs,
     marginBottom: SPACE.s,
+  },
+  stats: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACE.l,
+    marginBottom: SPACE.s,
+    gap: SPACE.s,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: RADIUS.m,
+    padding: SPACE.m,
+  },
+  statValue: {
+    color: colors.primary,
+    fontSize: TYPO.h2,
+    fontWeight: '700',
+    fontFamily: FONT_FAMILIES.modern,
+  },
+  statLabel: {
+    color: colors.muted,
+    fontSize: TYPO.caption,
+    fontFamily: FONT_FAMILIES.modern,
+  },
+  favoriteActions: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACE.l,
+  },
+  clearFavoritesButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: SPACE.s,
+  },
+  clearFavoritesText: {
+    color: colors.primary,
+    fontSize: TYPO.caption,
+    fontWeight: '700',
   },
 
   filters: {
@@ -206,22 +314,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACE.m,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
   },
 
   selectedFilter: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary,
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
   },
 
   filterText: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: TYPO.caption,
+    fontFamily: favoritesOnly ? FONT_FAMILIES.editorial : FONT_FAMILIES.modern,
   },
 
   selectedFilterText: {
-    color: COLORS.onPrimary,
+    color: colors.onPrimary,
   },
 
   resetButton: {
@@ -231,15 +340,16 @@ const styles = StyleSheet.create({
   },
 
   resetText: {
-    color: COLORS.primary,
+    color: colors.primary,
     fontSize: TYPO.caption,
     fontWeight: '700',
+    fontFamily: favoritesOnly ? FONT_FAMILIES.editorial : FONT_FAMILIES.modern,
   },
 
   resultCount: {
     paddingHorizontal: SPACE.l,
     paddingBottom: SPACE.xs,
-    color: COLORS.muted,
+    color: colors.muted,
     fontSize: TYPO.caption,
   },
 
@@ -249,6 +359,9 @@ const styles = StyleSheet.create({
     paddingBottom: SPACE.l,
     gap: SPACE.m,
     flexGrow: 1,
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
   },
 
   columnWrapper: {
@@ -265,8 +378,26 @@ const styles = StyleSheet.create({
 
   empty: {
     textAlign: 'center',
-    color: COLORS.muted,
-    marginTop: 40,
+    color: colors.muted,
+    marginTop: SPACE.xl,
     fontSize: TYPO.body,
+  },
+  emptyState: {
+    alignItems: 'center',
+    gap: SPACE.m,
+  },
+  emptyAction: {
+    minHeight: 44,
+    paddingHorizontal: SPACE.l,
+    borderRadius: RADIUS.m,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+  },
+  emptyActionText: {
+    color: colors.onPrimary,
+    fontSize: TYPO.body,
+    fontWeight: '700',
+    fontFamily: favoritesOnly ? FONT_FAMILIES.editorial : FONT_FAMILIES.modern,
   },
 });

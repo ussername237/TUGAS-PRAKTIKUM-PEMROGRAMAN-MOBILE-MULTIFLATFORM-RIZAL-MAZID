@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Pressable,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,31 +8,63 @@ import {
 } from 'react-native';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEntries } from '../../context/EntriesContext';
-import { COLORS, MIN_TOUCH, RADIUS, SPACE, TYPO } from '../../styles/tokens';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { deleteEntry, toggleLike } from '../../features/diary/diarySlice';
+import { useTheme } from '../../context/ThemeContext';
+import {
+  FONT_FAMILIES,
+  MIN_TOUCH,
+  RADIUS,
+  SPACE,
+  TYPO,
+} from '../../styles/tokens';
+import AnimatedPressable from '../../components/AnimatedPressable';
+import MoodEmblem from '../../components/MoodEmblem';
+import { getMoodLabel } from '../../constants/moods';
 
 export default function DiaryDetailRoute() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { id } = useLocalSearchParams();
-  const { getById, likedIds, toggleLike } = useEntries();
-  const entry = getById(Array.isArray(id) ? id[0] : id);
+  const entryId = Array.isArray(id) ? id[0] : id;
+  const dispatch = useAppDispatch();
+  const entry = useAppSelector((state) =>
+    state.diary.entries.find((item) => item.id === String(entryId))
+  );
 
   if (!entry) {
     return (
       <View style={styles.notFound}>
         <Stack.Screen options={{ title: 'Detail Diary' }} />
         <Text style={styles.notFoundText}>Entri tidak ditemukan.</Text>
-        <Pressable
+        <AnimatedPressable
           onPress={() => router.replace('/')}
           style={styles.homeButton}
           accessibilityRole="button"
         >
           <Text style={styles.homeButtonText}>Kembali ke Home</Text>
-        </Pressable>
+        </AnimatedPressable>
       </View>
     );
   }
 
-  const liked = likedIds.has(entry.id);
+  const confirmDelete = () => {
+    Alert.alert(
+      'Hapus diary',
+      'Catatan ini akan dihapus dari aplikasi.',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: () => {
+            dispatch(deleteEntry(entry.id));
+            router.replace('/');
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <>
@@ -41,9 +73,10 @@ export default function DiaryDetailRoute() {
         <ScrollView contentContainerStyle={styles.content}>
           <View
             style={styles.mood}
-            accessibilityLabel={`Suasana hati: ${entry.mood || 'belum ditentukan'}`}
+            accessibilityLabel={`Suasana hati: ${getMoodLabel(entry.mood)}`}
           >
-            <Text style={styles.moodEmoji}>{entry.mood || '📔'}</Text>
+            <MoodEmblem mood={entry.mood} size={88} animated />
+            <Text style={styles.moodLabel}>{getMoodLabel(entry.mood)}</Text>
           </View>
           <Text style={styles.title} accessibilityRole="header">
             {entry.title}
@@ -51,94 +84,145 @@ export default function DiaryDetailRoute() {
           <Text style={styles.date}>{entry.date}</Text>
           <Text style={styles.body}>{entry.body}</Text>
 
-          <Pressable
-            onPress={() => toggleLike(entry.id)}
-            style={({ pressed }) => [
-              styles.likeButton,
-              pressed && styles.pressed,
-            ]}
+          <AnimatedPressable
+            onPress={() => dispatch(toggleLike(entry.id))}
+            style={styles.likeButton}
             accessibilityRole="button"
-            accessibilityLabel={liked ? 'Batalkan suka' : 'Sukai catatan'}
-            accessibilityState={{ selected: liked }}
+            accessibilityLabel={
+              entry.liked ? 'Hapus dari favorit' : 'Tambahkan ke favorit'
+            }
+            accessibilityState={{ selected: entry.liked }}
           >
             <Text style={styles.likeText}>
-              {liked ? '♥ Disukai' : '♡ Suka'}
+              {entry.liked ? '♥ Hapus dari Favorit' : '♥ Tambah ke Favorit'}
             </Text>
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable
+          <AnimatedPressable
+            onPress={() =>
+              router.push({
+                pathname: '/edit/[id]',
+                params: { id: entry.id },
+              })
+            }
+            style={styles.editButton}
+            accessibilityRole="button"
+          >
+            <Text style={styles.editButtonText}>Edit Diary</Text>
+          </AnimatedPressable>
+
+          <AnimatedPressable
+            onPress={confirmDelete}
+            style={styles.deleteButton}
+            accessibilityRole="button"
+          >
+            <Text style={styles.deleteButtonText}>Hapus Diary</Text>
+          </AnimatedPressable>
+
+          <AnimatedPressable
             onPress={() => router.replace('/')}
-            style={({ pressed }) => [
-              styles.homeButton,
-              pressed && styles.pressed,
-            ]}
+            style={styles.homeButton}
             accessibilityRole="button"
           >
             <Text style={styles.homeButtonText}>Kembali ke Home</Text>
-          </Pressable>
+          </AnimatedPressable>
         </ScrollView>
       </SafeAreaView>
     </>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
   },
   content: {
     padding: SPACE.l,
     gap: SPACE.m,
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
   },
   mood: {
     width: '100%',
     minHeight: 140,
     borderRadius: RADIUS.m,
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.secondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  moodEmoji: {
-    fontSize: 64,
+  moodLabel: {
+    marginTop: SPACE.s,
+    color: colors.muted,
+    fontSize: TYPO.caption,
+    fontFamily: FONT_FAMILIES.editorial,
   },
   title: {
     fontSize: TYPO.h1,
     fontWeight: '700',
-    color: COLORS.text,
+    color: colors.text,
+    fontFamily: FONT_FAMILIES.editorial,
   },
   date: {
     fontSize: TYPO.caption,
-    color: COLORS.muted,
+    color: colors.muted,
   },
   body: {
     fontSize: TYPO.body,
-    color: COLORS.text,
+    color: colors.text,
     lineHeight: 24,
+    fontFamily: FONT_FAMILIES.editorial,
   },
   likeButton: {
     minHeight: MIN_TOUCH,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     borderRadius: RADIUS.m,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
   },
   likeText: {
-    color: COLORS.primary,
+    color: colors.primary,
+    fontSize: TYPO.body,
+    fontWeight: '700',
+  },
+  editButton: {
+    minHeight: MIN_TOUCH,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: RADIUS.m,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+  },
+  editButtonText: {
+    color: colors.primary,
+    fontSize: TYPO.body,
+    fontWeight: '700',
+  },
+  deleteButton: {
+    minHeight: MIN_TOUCH,
+    borderRadius: RADIUS.m,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.danger,
+  },
+  deleteButtonText: {
+    color: colors.onPrimary,
     fontSize: TYPO.body,
     fontWeight: '700',
   },
   homeButton: {
     minHeight: MIN_TOUCH,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: RADIUS.m,
     alignItems: 'center',
     justifyContent: 'center',
   },
   homeButtonText: {
-    color: COLORS.onPrimary,
+    color: colors.onPrimary,
     fontSize: TYPO.body,
     fontWeight: '700',
   },
@@ -148,13 +232,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACE.m,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
   },
   notFoundText: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: TYPO.body,
-  },
-  pressed: {
-    opacity: 0.8,
   },
 });

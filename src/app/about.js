@@ -1,9 +1,13 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACE, TYPO } from '../styles/tokens';
+import { useTheme } from '../context/ThemeContext';
+import { FONT_FAMILIES, SPACE, TYPO } from '../styles/tokens';
 
 export default function AboutRoute() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -21,37 +25,45 @@ export default function AboutRoute() {
           kembali ke Home.
         </Text>
         <Text style={styles.body}>
-          Catatan dan status suka dibagikan antarhalaman menggunakan Context.
-          Data saat ini disimpan sementara selama aplikasi berjalan.
+          Catatan dan status favorit dikelola sebagai global state menggunakan
+          Redux Toolkit dan React-Redux. Input formulir tetap menggunakan local
+          state. Data disimpan sementara di memori dan akan kembali ke data awal
+          saat aplikasi dimulai ulang.
         </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
   },
   content: {
     padding: SPACE.l,
     gap: SPACE.m,
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
   },
   title: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: TYPO.h1,
     fontWeight: '700',
+    fontFamily: FONT_FAMILIES.editorial,
   },
   sectionTitle: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: TYPO.h2,
     fontWeight: '700',
     marginTop: SPACE.s,
+    fontFamily: FONT_FAMILIES.editorial,
   },
   body: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: TYPO.body,
     lineHeight: 24,
+    fontFamily: FONT_FAMILIES.editorial,
   },
 });

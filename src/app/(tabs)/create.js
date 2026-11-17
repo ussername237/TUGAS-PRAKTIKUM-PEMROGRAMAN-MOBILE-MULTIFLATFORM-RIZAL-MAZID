@@ -3,14 +3,18 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } f
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import EntryForm from '../../components/EntryForm';
-import { useEntries } from '../../context/EntriesContext';
-import { COLORS, SPACE, TYPO } from '../../styles/tokens';
+import { useAppDispatch } from '../../store/hooks';
+import { addEntry } from '../../features/diary/diarySlice';
+import { useTheme } from '../../context/ThemeContext';
+import { FONT_FAMILIES, SPACE, TYPO } from '../../styles/tokens';
 
 export default function CreateRoute() {
-  const { addEntry } = useEntries();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const dispatch = useAppDispatch();
 
   const saveEntry = (entry) => {
-    addEntry(entry);
+    dispatch(addEntry(entry));
     router.replace('/');
     Alert.alert('Berhasil', 'Catatan berhasil ditambahkan.');
   };
@@ -38,10 +42,10 @@ export default function CreateRoute() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.surface,
   },
   container: {
     flex: 1,
@@ -49,14 +53,19 @@ const styles = StyleSheet.create({
   content: {
     padding: SPACE.l,
     gap: SPACE.s,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   title: {
     fontSize: TYPO.h1,
     fontWeight: '700',
-    color: COLORS.text,
+    color: colors.text,
+    fontFamily: FONT_FAMILIES.modernMedium,
   },
   subtitle: {
     fontSize: TYPO.body,
-    color: COLORS.muted,
+    color: colors.muted,
+    fontFamily: FONT_FAMILIES.modern,
   },
 });

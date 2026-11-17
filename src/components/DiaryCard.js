@@ -4,8 +4,12 @@ import {
   View,
   Text,
   StyleSheet,
-  Pressable,
 } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
+import AnimatedPressable from './AnimatedPressable';
+import MoodEmblem from './MoodEmblem';
+import { getMoodLabel } from '../constants/moods';
+import { FONT_FAMILIES } from '../styles/tokens';
 
 export default function DiaryCard({
   title,
@@ -16,7 +20,11 @@ export default function DiaryCard({
   liked = false,
   onPress,
   onToggleLike,
+  fontFamily = FONT_FAMILIES.modern,
 }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors, fontFamily);
+
   return (
     <View
       style={[
@@ -24,15 +32,15 @@ export default function DiaryCard({
         variant === 'grid' && styles.gridCard,
       ]}
     >
-      <Pressable
+      <AnimatedPressable
         onPress={onPress}
         style={styles.mainContent}
         accessibilityRole="button"
-        accessibilityLabel={`Buka entri ${title}`}
+        accessibilityLabel={`Buka entri ${title}, suasana ${getMoodLabel(mood)}`}
         accessibilityHint="Membuka detail catatan."
       >
         <View style={styles.mood}>
-          <Text style={styles.moodText}>{mood || '📔'}</Text>
+          <MoodEmblem mood={mood} size={48} />
         </View>
 
         <View style={styles.content}>
@@ -48,32 +56,35 @@ export default function DiaryCard({
             {preview}
           </Text>
         </View>
-      </Pressable>
+      </AnimatedPressable>
 
-      <Pressable
+      <AnimatedPressable
         onPress={onToggleLike}
-        style={styles.likeButton}
+        style={[
+          styles.likeButton,
+          liked && styles.likedButton,
+        ]}
         accessibilityRole="button"
         accessibilityLabel={
-          liked ? 'Batalkan suka' : 'Sukai catatan'
+          liked ? 'Hapus dari favorit' : 'Tambahkan ke favorit'
         }
         accessibilityState={{ selected: liked }}
       >
-        <Text style={styles.like}>
-          {liked ? '❤️' : '🤍'}
+        <Text style={[styles.like, liked && styles.likedText]}>
+          ♥
         </Text>
-      </Pressable>
+      </AnimatedPressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors, fontFamily) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 12,
     marginBottom: 12,
@@ -95,13 +106,9 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.secondary,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-
-  moodText: {
-    fontSize: 32,
   },
 
   content: {
@@ -111,28 +118,41 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: colors.text,
+    fontFamily,
   },
 
   date: {
     fontSize: 12,
-    color: '#6B7280',
+    color: colors.muted,
     marginVertical: 4,
+    fontFamily,
   },
 
   preview: {
     fontSize: 13,
-    color: '#4B5563',
+    color: colors.text,
+    fontFamily,
   },
 
   likeButton: {
-    padding: 5,
-    minWidth: 36,
+    minWidth: 44,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 22,
+  },
+
+  likedButton: {
+    backgroundColor: colors.primarySoft,
   },
 
   like: {
     fontSize: 22,
+    color: colors.muted,
+  },
+
+  likedText: {
+    color: colors.danger,
   },
 });

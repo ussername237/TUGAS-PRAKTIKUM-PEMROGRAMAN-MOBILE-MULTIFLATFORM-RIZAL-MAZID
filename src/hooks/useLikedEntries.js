@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
-export function useLikedEntries(entries, likedIds) {
+export function useLikedEntries(entries) {
   return useMemo(
-    () => entries.filter((entry) => likedIds.has(entry.id)),
-    [entries, likedIds]
+    () => entries.filter((entry) => entry.liked),
+    [entries]
   );
 }
